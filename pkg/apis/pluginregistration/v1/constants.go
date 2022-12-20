@@ -21,6 +21,6 @@ const (
 	CSIPlugin = "CSIPlugin"
 	// DevicePlugin identifier for registered device plugins
 	DevicePlugin = "DevicePlugin"
-	// DRAPlugin identifier for registered Dynamic Resourc Allocation plugins
-	DRAPlugin = "DRAPlugin"
+	// ResourcePlugin identifier for registered resource plugins
+	ResourcePlugin = "ResourcePlugin"
 )
