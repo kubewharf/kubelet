@@ -76,6 +76,31 @@ message ResourceRequest {
     string native_qos_class = 14;
 }
 
+message PodResourceRequest {
+  string pod_uid = 1;
+  string pod_namespace = 2;
+  string pod_name = 3;
+  string pod_role = 4;
+  string pod_type = 5;
+  string resource_name = 6;
+  TopologyHint hint = 7;
+  map<string,double> resource_requests = 8;
+  map<string, string> labels = 9;
+  map<string, string> annotations = 10;
+}
+
+message PodResourceHintsResponse {
+  string pod_uid = 1;
+  string pod_namespace = 2;
+  string pod_name = 3;
+  string pod_role = 4;
+  string pod_type = 5;
+  string resource_name = 6;
+  map<string,ListOfTopologyHints> resource_hints = 7;
+  map<string, string> labels = 8;
+  map<string, string> annotations = 9;
+}
+
 message ResourceHintsResponse {
 	string pod_uid = 1;
 	string pod_namespace = 2;
@@ -106,6 +131,18 @@ message ResourceAllocationResponse {
     map<string, string> labels = 11;
     map<string, string> annotations = 12;
     string native_qos_class = 13;
+}
+
+message PodResourceAllocationResponse {
+  string pod_uid = 1;
+  string pod_namespace = 2;
+  string pod_name = 3;
+  string pod_role = 4;
+  string pod_type = 5;
+  string resource_name = 6;
+  ResourceAllocation allocation_result = 7;
+  map<string, string> labels = 8;
+  map<string, string> annotations = 9;
 }
 
 message ListOfTopologyHints {
@@ -238,6 +275,9 @@ service ResourcePlugin {
 	// GetTopologyHints returns hints of corresponding resources
     rpc GetTopologyHints(ResourceRequest) returns (ResourceHintsResponse) {}
 
+  // GetPodTopologyHints returns hints of corresponding resources for pod
+    rpc GetPodTopologyHints(PodResourceRequest) returns (PodResourceHintsResponse) {}
+
 	// Notify the resource plugin that the pod has beed deleted,
     // and the plugin should do some clear-up work.
     rpc RemovePod(RemovePodRequest) returns (RemovePodResponse) {}
@@ -259,6 +299,11 @@ service ResourcePlugin {
 	// plugin can allocate corresponding resource for the container 
     // according to resource request
     rpc Allocate(ResourceRequest) returns (ResourceAllocationResponse) {}
+
+  // AllocateForPod is called during pod admit so that the resource
+  // plugin can allocate corresponding resource for the pod
+  // according to resource request
+  rpc AllocateForPod(PodResourceRequest) returns (PodResourceAllocationResponse) {}
 
 	// PreStartContainer is called, if indicated by resource plugin during registeration phase,
 	// before each container start. Resource plugin can run resource specific operations
