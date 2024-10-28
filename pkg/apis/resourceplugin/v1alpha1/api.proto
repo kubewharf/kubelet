@@ -180,20 +180,22 @@ message ResourceAllocation {
 }
 
 message ResourceAllocationInfo {
-	string oci_property_name = 1;
-        bool is_node_resource = 2;
-	bool is_scalar_resource = 3;
-	// only for exclusive resources
-	double allocated_quantity = 4; 
-    string allocation_result = 5;
-    map<string,string> envs = 6;
-    map<string,string> annotations = 7;
-    // topology hints corresponds to allocation information.
-    // we need it when kubelet restarts and resurces had been allocated.
-    // - why don't we use GetTopologyAwareResources of qrm to generate hints?
-    // - for those resources with accompanying resources,
-    //   we can't generate hints of its accompanying resource by its allocation_result.
-    ListOfTopologyHints resource_hints = 8;
+  string oci_property_name = 1;
+  bool is_node_resource = 2;
+  bool is_scalar_resource = 3;
+  // only for exclusive resources
+  double allocated_quantity = 4;
+  string allocation_result = 5;
+  map<string,string> envs = 6;
+  map<string,string> annotations = 7;
+  // topology hints corresponds to allocation information.
+  // we need it when kubelet restarts and resurces had been allocated.
+  // - why don't we use GetTopologyAwareResources of qrm to generate hints?
+  // - for those resources with accompanying resources,
+  //   we can't generate hints of its accompanying resource by its allocation_result.
+  ListOfTopologyHints resource_hints = 8;
+  // keyed by numa node id, value is assignment for the pod in corresponding NUMA node
+  map<uint64, uint64> topology_assignments = 9;
 }
 
 message GetTopologyAwareResourcesRequest {
