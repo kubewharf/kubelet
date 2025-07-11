@@ -33,6 +33,8 @@ message ResourcePluginOptions {
 	bool with_topology_alignment = 2;
 	// Indicates if the resource needs reconciling allocation result
 	bool need_reconcile = 3;
+  // Indicates the devices that this plugin needs to allocate
+  repeated string associated_devices = 4;
 }
 
 message RegisterRequest {
@@ -311,4 +313,68 @@ service ResourcePlugin {
 	// before each container start. Resource plugin can run resource specific operations
 	// such as resetting the resource before making resources available to the container
 	rpc PreStartContainer(PreStartContainerRequest) returns (PreStartContainerResponse) {}
+
+  // UpdateAllocatableAssociatedDevices updates the allocatable associated devices for the resource plugin
+  // This is called when the device plugin reports the allocatable devices
+  rpc UpdateAllocatableAssociatedDevices(UpdateAllocatableAssociatedDevicesRequest) returns (UpdateAllocatableAssociatedDevicesResponse) {}
+
+  // AllocateAssociatedDevice allocates the associated device for the container
+  rpc AllocateAssociatedDevice(AssociatedDeviceRequest) returns (AssociatedDeviceAllocationResponse) {}
+}
+
+// AssociatedDevice represents a device that is associated with a resource and can be used by a container.
+message AssociatedDevice {
+  // ID is a unique identifier assigned by the device plugin to identify the device.
+  // The maximum length of this field is 63 characters.
+  string ID = 1;
+  // Health indicates the health of the device (e.g., healthy or unhealthy).
+  // See constants.go for possible values.
+  string health = 2;
+  // Topology provides the NUMA affinity of the device.
+  TopologyInfo topology = 3;
+}
+
+// TopologyInfo contains the NUMA node information for a device.
+message TopologyInfo {
+  repeated NUMANode nodes = 1;
+}
+
+// NUMANode represents a NUMA node.
+message NUMANode {
+  int64 ID = 1;
+}
+
+// UpdateAllocatableAssociatedDevicesRequest is the request sent to a resource plugin
+// to update its knowledge of allocatable devices.
+message UpdateAllocatableAssociatedDevicesRequest {
+  string device_name = 1;
+  repeated AssociatedDevice devices = 2;
+}
+
+// UpdateAllocatableAssociatedDevicesResponse is the empty response from the resource plugin.
+message UpdateAllocatableAssociatedDevicesResponse {
+}
+
+// AssociatedDeviceRequest is the request sent to a resource plugin to allocate an associated device.
+message AssociatedDeviceRequest {
+  ResourceRequest resource_request = 1;
+  DeviceRequest device_request = 2;
+}
+
+message DeviceRequest {
+  string device_name = 1;
+  TopologyHint hint = 2;
+  repeated string available_devices = 3;
+  repeated string must_include_devices = 4;
+  uint64 device_request = 5;
+}
+
+// AssociatedDeviceAllocationResponse contains the result of an associated device allocation.
+message AssociatedDeviceAllocationResponse {
+  AssociatedDeviceAllocation allocation_result = 1;
+}
+
+// AssociatedDeviceAllocation represents the result of an allocation.
+message AssociatedDeviceAllocation {
+  repeated string allocated_devices = 1;
 }
