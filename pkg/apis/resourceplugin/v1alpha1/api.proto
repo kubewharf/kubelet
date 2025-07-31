@@ -314,6 +314,9 @@ service ResourcePlugin {
 	// such as resetting the resource before making resources available to the container
 	rpc PreStartContainer(PreStartContainerRequest) returns (PreStartContainerResponse) {}
 
+  // GetAssociatedDeviceTopologyHints gets associated device for the container
+  rpc GetAssociatedDeviceTopologyHints(AssociatedDeviceRequest) returns (AssociatedDeviceHintsResponse) {}
+
   // UpdateAllocatableAssociatedDevices updates the allocatable associated devices for the resource plugin
   // This is called when the device plugin reports the allocatable devices
   rpc UpdateAllocatableAssociatedDevices(UpdateAllocatableAssociatedDevicesRequest) returns (UpdateAllocatableAssociatedDevicesResponse) {}
@@ -365,7 +368,7 @@ message DeviceRequest {
   string device_name = 1;
   TopologyHint hint = 2;
   repeated string available_devices = 3;
-  repeated string must_include_devices = 4;
+  repeated string reusable_devices = 4;
   uint64 device_request = 5;
 }
 
@@ -377,4 +380,19 @@ message AssociatedDeviceAllocationResponse {
 // AssociatedDeviceAllocation represents the result of an allocation.
 message AssociatedDeviceAllocation {
   repeated string allocated_devices = 1;
+}
+
+message AssociatedDeviceHintsResponse {
+  string pod_uid = 1;
+  string pod_namespace = 2;
+  string pod_name = 3;
+  string container_name = 4;
+  ContainerType container_type = 5;
+  uint64 container_index = 6;
+  string pod_role = 7;
+  string pod_type = 8;
+  string device_name = 9;
+  ListOfTopologyHints device_hints = 10;
+  map<string, string> labels = 11;
+  map<string, string> annotations = 12;
 }
