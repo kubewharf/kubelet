@@ -48,6 +48,12 @@ const (
 	KubeletResourcePluginGetTopologyAwareResourcesRPCTimeoutInSecs = 10
 	// Timeout duration in secs for GetTopologyAwareAllocatableResources RPC
 	KubeletResourcePluginGetTopologyAwareAllocatableResourcesRPCTimeoutInSecs = 10
+	// Timeout duration in secs for GetAssociatedDeviceTopologyHints RPC
+	KubeletResourcePluginGetAssociatedDeviceTopologyHintsRPCTimeoutInSecs = 10
+	// Timeout duration in secs for UpdateAllocatableAssociatedDevices RPC
+	KubeletResourcePluginUpdateAllocatableAssociatedDevicesRPCTimeoutInSecs = 10
+	// Timeout duration in secs for AllocateAssociatedDevice RPC
+	KubeletResourcePluginAllocateAssociatedDeviceRPCTimeoutInSecs = 10
 
 	PodRoleLabelKey      = "katalyst.kubewharf.io/pod_role"
 	PodTypeAnnotationKey = "katalyst.kubewharf.io/pod_type"
