@@ -361,7 +361,9 @@ message UpdateAllocatableAssociatedDevicesResponse {
 // AssociatedDeviceRequest is the request sent to a resource plugin to allocate an associated device.
 message AssociatedDeviceRequest {
   ResourceRequest resource_request = 1;
-  DeviceRequest device_request = 2;
+  repeated DeviceRequest device_request = 2;
+  string accompany_resource_name = 3;
+  string device_name = 4;
 }
 
 message DeviceRequest {
