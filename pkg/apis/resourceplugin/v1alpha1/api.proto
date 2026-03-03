@@ -181,6 +181,30 @@ message ResourceAllocation {
     map<string,ResourceAllocationInfo> resource_allocation = 1;
 }
 
+// Mount specifies a host volume to mount into a container.
+// where device library or tools are installed on host and container
+message Mount {
+  // Path of the mount within the container.
+  string container_path = 1;
+  // Path of the mount on the host.
+  string host_path = 2;
+  // If set, the mount is read-only.
+  bool read_only = 3;
+}
+
+// DeviceSpec specifies a host device to mount into a container.
+message DeviceSpec {
+  // Path of the device within the container.
+  string container_path = 1;
+  // Path of the device on the host.
+  string host_path = 2;
+  // Cgroups permissions of the device, candidates are one or more of
+  // * r - allows container to read from the specified device.
+  // * w - allows container to write to the specified device.
+  // * m - allows container to create device files that do not yet exist.
+  string permissions = 3;
+}
+
 message ResourceAllocationInfo {
   string oci_property_name = 1;
   bool is_node_resource = 2;
@@ -198,6 +222,10 @@ message ResourceAllocationInfo {
   ListOfTopologyHints resource_hints = 8;
   // keyed by numa node id, value is assignment for the pod in corresponding NUMA node
   map<uint64, uint64> topology_assignments = 9;
+  // Mounts for the container.
+  repeated Mount mounts = 10;
+  // Devices for the container.
+  repeated DeviceSpec devices = 11;
 }
 
 message GetTopologyAwareResourcesRequest {
