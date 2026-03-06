@@ -25,6 +25,8 @@ message ResourcePluginOptions {
 	bool need_reconcile = 3;
     // Indicates the devices that this plugin needs to allocate
     repeated string associated_devices = 4;
+    // Indicates the extra resources that this plugin needs to allocate
+    repeated string extra_resources = 5;
 }
 
 message RegisterRequest {
