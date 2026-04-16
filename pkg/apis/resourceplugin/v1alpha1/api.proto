@@ -35,6 +35,8 @@ message ResourcePluginOptions {
 	bool need_reconcile = 3;
   // Indicates the devices that this plugin needs to allocate
   repeated string associated_devices = 4;
+  // Indicates the extra resources that this plugin needs to allocate
+  repeated string extra_resources = 5;
 }
 
 message RegisterRequest {
@@ -174,7 +176,7 @@ message GetResourcesAllocationResponse {
 }
 
 message ContainerResources {
-    map<string,ResourceAllocation> container_resources = 1; 
+    map<string,ResourceAllocation> container_resources = 1;
 }
 
 message ResourceAllocation {
@@ -248,8 +250,8 @@ message ContainerTopologyAwareResources {
 message TopologyAwareResource {
     bool is_node_resource = 1;
     bool is_scalar_resource = 2;
-    double aggregated_quantity = 3; 
-    double original_aggregated_quantity = 4; 
+    double aggregated_quantity = 3;
+    double original_aggregated_quantity = 4;
     repeated TopologyAwareQuantity topology_aware_quantity_list = 5;
     repeated TopologyAwareQuantity original_topology_aware_quantity_list = 6;
 }
@@ -328,7 +330,7 @@ service ResourcePlugin {
 	rpc GetResourcePluginOptions(Empty) returns (ResourcePluginOptions) {}
 
 	// Allocate is called during pod admit so that the resource
-	// plugin can allocate corresponding resource for the container 
+	// plugin can allocate corresponding resource for the container
     // according to resource request
     rpc Allocate(ResourceRequest) returns (ResourceAllocationResponse) {}
 
