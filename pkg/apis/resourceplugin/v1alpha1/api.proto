@@ -78,6 +78,7 @@ message ResourceRequest {
     map<string, string> labels = 12;
     map<string, string> annotations = 13;
     string native_qos_class = 14;
+    string runtime_class = 15;
 }
 
 message PodResourceRequest {
