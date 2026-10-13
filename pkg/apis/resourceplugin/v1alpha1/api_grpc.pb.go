@@ -154,12 +154,14 @@ var Registration_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	ResourcePlugin_GetTopologyHints_FullMethodName                     = "/resourceplugin.v1alpha1.ResourcePlugin/GetTopologyHints"
+	ResourcePlugin_GetPodTopologyHints_FullMethodName                  = "/resourceplugin.v1alpha1.ResourcePlugin/GetPodTopologyHints"
 	ResourcePlugin_RemovePod_FullMethodName                            = "/resourceplugin.v1alpha1.ResourcePlugin/RemovePod"
 	ResourcePlugin_GetResourcesAllocation_FullMethodName               = "/resourceplugin.v1alpha1.ResourcePlugin/GetResourcesAllocation"
 	ResourcePlugin_GetTopologyAwareResources_FullMethodName            = "/resourceplugin.v1alpha1.ResourcePlugin/GetTopologyAwareResources"
 	ResourcePlugin_GetTopologyAwareAllocatableResources_FullMethodName = "/resourceplugin.v1alpha1.ResourcePlugin/GetTopologyAwareAllocatableResources"
 	ResourcePlugin_GetResourcePluginOptions_FullMethodName             = "/resourceplugin.v1alpha1.ResourcePlugin/GetResourcePluginOptions"
 	ResourcePlugin_Allocate_FullMethodName                             = "/resourceplugin.v1alpha1.ResourcePlugin/Allocate"
+	ResourcePlugin_AllocateForPod_FullMethodName                       = "/resourceplugin.v1alpha1.ResourcePlugin/AllocateForPod"
 	ResourcePlugin_PreStartContainer_FullMethodName                    = "/resourceplugin.v1alpha1.ResourcePlugin/PreStartContainer"
 	ResourcePlugin_GetAssociatedDeviceTopologyHints_FullMethodName     = "/resourceplugin.v1alpha1.ResourcePlugin/GetAssociatedDeviceTopologyHints"
 	ResourcePlugin_UpdateAllocatableAssociatedDevices_FullMethodName   = "/resourceplugin.v1alpha1.ResourcePlugin/UpdateAllocatableAssociatedDevices"
@@ -174,6 +176,8 @@ const (
 type ResourcePluginClient interface {
 	// GetTopologyHints returns hints of corresponding resources
 	GetTopologyHints(ctx context.Context, in *ResourceRequest, opts ...grpc.CallOption) (*ResourceHintsResponse, error)
+	// GetPodTopologyHints returns hints of corresponding resources for pod
+	GetPodTopologyHints(ctx context.Context, in *PodResourceRequest, opts ...grpc.CallOption) (*PodResourceHintsResponse, error)
 	// Notify the resource plugin that the pod has beed deleted,
 	// and the plugin should do some clear-up work.
 	RemovePod(ctx context.Context, in *RemovePodRequest, opts ...grpc.CallOption) (*RemovePodResponse, error)
@@ -190,6 +194,10 @@ type ResourcePluginClient interface {
 	// plugin can allocate corresponding resource for the container
 	// according to resource request
 	Allocate(ctx context.Context, in *ResourceRequest, opts ...grpc.CallOption) (*ResourceAllocationResponse, error)
+	// AllocateForPod is called during pod admit so that the resource
+	// plugin can allocate corresponding resource for the pod
+	// according to resource request
+	AllocateForPod(ctx context.Context, in *PodResourceRequest, opts ...grpc.CallOption) (*PodResourceAllocationResponse, error)
 	// PreStartContainer is called, if indicated by resource plugin during registeration phase,
 	// before each container start. Resource plugin can run resource specific operations
 	// such as resetting the resource before making resources available to the container
@@ -215,6 +223,16 @@ func (c *resourcePluginClient) GetTopologyHints(ctx context.Context, in *Resourc
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResourceHintsResponse)
 	err := c.cc.Invoke(ctx, ResourcePlugin_GetTopologyHints_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourcePluginClient) GetPodTopologyHints(ctx context.Context, in *PodResourceRequest, opts ...grpc.CallOption) (*PodResourceHintsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PodResourceHintsResponse)
+	err := c.cc.Invoke(ctx, ResourcePlugin_GetPodTopologyHints_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -281,6 +299,16 @@ func (c *resourcePluginClient) Allocate(ctx context.Context, in *ResourceRequest
 	return out, nil
 }
 
+func (c *resourcePluginClient) AllocateForPod(ctx context.Context, in *PodResourceRequest, opts ...grpc.CallOption) (*PodResourceAllocationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PodResourceAllocationResponse)
+	err := c.cc.Invoke(ctx, ResourcePlugin_AllocateForPod_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *resourcePluginClient) PreStartContainer(ctx context.Context, in *PreStartContainerRequest, opts ...grpc.CallOption) (*PreStartContainerResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PreStartContainerResponse)
@@ -329,6 +357,8 @@ func (c *resourcePluginClient) AllocateAssociatedDevice(ctx context.Context, in 
 type ResourcePluginServer interface {
 	// GetTopologyHints returns hints of corresponding resources
 	GetTopologyHints(context.Context, *ResourceRequest) (*ResourceHintsResponse, error)
+	// GetPodTopologyHints returns hints of corresponding resources for pod
+	GetPodTopologyHints(context.Context, *PodResourceRequest) (*PodResourceHintsResponse, error)
 	// Notify the resource plugin that the pod has beed deleted,
 	// and the plugin should do some clear-up work.
 	RemovePod(context.Context, *RemovePodRequest) (*RemovePodResponse, error)
@@ -345,6 +375,10 @@ type ResourcePluginServer interface {
 	// plugin can allocate corresponding resource for the container
 	// according to resource request
 	Allocate(context.Context, *ResourceRequest) (*ResourceAllocationResponse, error)
+	// AllocateForPod is called during pod admit so that the resource
+	// plugin can allocate corresponding resource for the pod
+	// according to resource request
+	AllocateForPod(context.Context, *PodResourceRequest) (*PodResourceAllocationResponse, error)
 	// PreStartContainer is called, if indicated by resource plugin during registeration phase,
 	// before each container start. Resource plugin can run resource specific operations
 	// such as resetting the resource before making resources available to the container
@@ -369,6 +403,9 @@ type UnimplementedResourcePluginServer struct{}
 func (UnimplementedResourcePluginServer) GetTopologyHints(context.Context, *ResourceRequest) (*ResourceHintsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTopologyHints not implemented")
 }
+func (UnimplementedResourcePluginServer) GetPodTopologyHints(context.Context, *PodResourceRequest) (*PodResourceHintsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPodTopologyHints not implemented")
+}
 func (UnimplementedResourcePluginServer) RemovePod(context.Context, *RemovePodRequest) (*RemovePodResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemovePod not implemented")
 }
@@ -386,6 +423,9 @@ func (UnimplementedResourcePluginServer) GetResourcePluginOptions(context.Contex
 }
 func (UnimplementedResourcePluginServer) Allocate(context.Context, *ResourceRequest) (*ResourceAllocationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Allocate not implemented")
+}
+func (UnimplementedResourcePluginServer) AllocateForPod(context.Context, *PodResourceRequest) (*PodResourceAllocationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllocateForPod not implemented")
 }
 func (UnimplementedResourcePluginServer) PreStartContainer(context.Context, *PreStartContainerRequest) (*PreStartContainerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PreStartContainer not implemented")
@@ -434,6 +474,24 @@ func _ResourcePlugin_GetTopologyHints_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ResourcePluginServer).GetTopologyHints(ctx, req.(*ResourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourcePlugin_GetPodTopologyHints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PodResourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourcePluginServer).GetPodTopologyHints(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourcePlugin_GetPodTopologyHints_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourcePluginServer).GetPodTopologyHints(ctx, req.(*PodResourceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -546,6 +604,24 @@ func _ResourcePlugin_Allocate_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ResourcePlugin_AllocateForPod_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PodResourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourcePluginServer).AllocateForPod(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourcePlugin_AllocateForPod_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourcePluginServer).AllocateForPod(ctx, req.(*PodResourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ResourcePlugin_PreStartContainer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PreStartContainerRequest)
 	if err := dec(in); err != nil {
@@ -630,6 +706,10 @@ var ResourcePlugin_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ResourcePlugin_GetTopologyHints_Handler,
 		},
 		{
+			MethodName: "GetPodTopologyHints",
+			Handler:    _ResourcePlugin_GetPodTopologyHints_Handler,
+		},
+		{
 			MethodName: "RemovePod",
 			Handler:    _ResourcePlugin_RemovePod_Handler,
 		},
@@ -652,6 +732,10 @@ var ResourcePlugin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Allocate",
 			Handler:    _ResourcePlugin_Allocate_Handler,
+		},
+		{
+			MethodName: "AllocateForPod",
+			Handler:    _ResourcePlugin_AllocateForPod_Handler,
 		},
 		{
 			MethodName: "PreStartContainer",

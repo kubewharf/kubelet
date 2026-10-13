@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func TestResourcePluginOptionsExtraResources(t *testing.T) {
@@ -38,5 +39,50 @@ func TestResourcePluginOptionsExtraResources(t *testing.T) {
 
 	if !proto.Equal(options, got) {
 		t.Fatalf("round-trip mismatch: got %v, want %v", got.GetExtraResources(), want)
+	}
+}
+
+func TestLegacyCompatibilityContract(t *testing.T) {
+	file := File_staging_src_k8s_io_kubelet_pkg_apis_resourceplugin_v1alpha1_api_proto
+
+	for _, messageName := range []protoreflect.Name{
+		"PodResourceRequest",
+		"PodResourceHintsResponse",
+		"PodResourceAllocationResponse",
+		"DeviceSpec",
+	} {
+		if file.Messages().ByName(messageName) == nil {
+			t.Errorf("legacy message %q is missing", messageName)
+		}
+	}
+
+	legacyFields := []struct {
+		message protoreflect.Name
+		field   protoreflect.Name
+		number  protoreflect.FieldNumber
+	}{
+		{"ResourceRequest", "native_qos_class", 14},
+		{"ResourceHintsResponse", "native_qos_class", 13},
+		{"ResourceAllocationResponse", "native_qos_class", 13},
+		{"ResourceAllocationInfo", "topology_assignments", 9},
+		{"ResourceAllocationInfo", "devices", 11},
+	}
+	for _, legacyField := range legacyFields {
+		message := file.Messages().ByName(legacyField.message)
+		field := message.Fields().ByName(legacyField.field)
+		if field == nil {
+			t.Errorf("legacy field %s.%s is missing", legacyField.message, legacyField.field)
+			continue
+		}
+		if field.Number() != legacyField.number {
+			t.Errorf("legacy field %s.%s has number %d, want %d", legacyField.message, legacyField.field, field.Number(), legacyField.number)
+		}
+	}
+
+	resourcePlugin := file.Services().ByName("ResourcePlugin")
+	for _, methodName := range []protoreflect.Name{"GetPodTopologyHints", "AllocateForPod"} {
+		if resourcePlugin.Methods().ByName(methodName) == nil {
+			t.Errorf("legacy RPC %q is missing", methodName)
+		}
 	}
 }
